@@ -7,7 +7,14 @@ const port = process.env.PORT || 3000
 
 
 // middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173/", 
+    "https://food-service-auth.web.app", 
+  ],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 
 
@@ -26,7 +33,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const servicesCollection = client.db("foodServiceDB").collection("services");
     const usersCollection = client.db("foodServiceDB").collection("users");
@@ -65,7 +72,7 @@ async function run() {
     const serviceId = req.params.id;
     const review = req.body;
     review._id = new ObjectId();
-    
+
     const filter = { _id: new ObjectId(serviceId) };
     const updateDoc = { $push: { reviews: review } };
 
@@ -214,8 +221,8 @@ app.get('/my-services/:email', async (req, res) => {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
