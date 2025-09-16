@@ -58,53 +58,66 @@ async function run() {
       });
 
       //  Add new review to a service
-      // app.post('/services/:id/reviews', async (req, res) => {
-      //   const id = req.params.id;
-      // const { ObjectId } = require('mongodb');
-      // const review = req.body;
+      app.post('/services/:id/reviews', async (req, res) => {
+        const id = req.params.id;
+      const { ObjectId } = require('mongodb');
+      const review = req.body;
 
-      // const filter = { _id: new ObjectId(id) };
-      // const updateDoc = {
-      //   $push: { reviews: review }
-      // };
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $push: { reviews: review }
+      };
 
-      // const result = await servicesCollection.updateOne(filter, updateDoc);
-      // res.send(result);
-      // });
+      const result = await servicesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+      });
 
       //  Update a service (only by owner)
-    //   app.put('/services/:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   const { ObjectId } = require('mongodb');
-    //   const updatedService = req.body;
+      app.put('/services/:id', async (req, res) => {
+      const id = req.params.id;
+      const { ObjectId } = require('mongodb');
+      const updatedService = req.body;
 
-    //   const filter = { _id: new ObjectId(id) };
-    //   const updateDoc = {
-    //     $set: {
-    //       foodImg: updatedService.foodImg,
-    //       foodTitle: updatedService.foodTitle,
-    //       restaurantName: updatedService.restaurantName,
-    //       website: updatedService.website,
-    //       description: updatedService.description,
-    //       category: updatedService.category,
-    //       price: updatedService.price
-    //     }
-    //   };
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          foodImg: updatedService.foodImg,
+          foodTitle: updatedService.foodTitle,
+          restaurantName: updatedService.restaurantName,
+          website: updatedService.website,
+          description: updatedService.description,
+          category: updatedService.category,
+          price: updatedService.price
+        }
+      };
 
-    //   const result = await servicesCollection.updateOne(filter, updateDoc);
-    //   res.send(result);
-    // });
+      const result = await servicesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
 
-     //  Delete a service (only by owner)
-    // app.delete('/services/:id', async (req, res) => {
-    //   const id = req.params.id;
-    //   const { ObjectId } = require('mongodb');
-    //   const query = { _id: new ObjectId(id) };
+      // Delete a service (only by owner)
+    app.delete('/services/:id', async (req, res) => {
+      const id = req.params.id;
+      const { ObjectId } = require('mongodb');
+      const query = { _id: new ObjectId(id) };
 
-    //   const result = await servicesCollection.deleteOne(query);
-    //   res.send(result);
-    // });
+      const result = await servicesCollection.deleteOne(query);
+      res.send(result);
+    });
+
+
+    // Get services of logged-in user
+app.get('/my-services/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const services = await servicesCollection.find({ userEmail: email }).toArray();
+    res.send(services);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: "Server error" });
+  }
+});
 
        // Users related APIs
 
