@@ -45,9 +45,11 @@ async function run() {
         const serviceData = req.body;
         serviceData.addedDate = new Date(); 
         const result = await servicesCollection.insertOne(serviceData);
-        res.send(result);
+        res.send({
+    success: result.acknowledged,
+    insertedId: result.insertedId
+  });
       });
-
        //  Get single service details by ID
       app.get('/services/:id', async (req, res) => {
         const id = req.params.id;
@@ -57,20 +59,75 @@ async function run() {
         res.send(service);
       });
 
-      //  Add new review to a service
+     //  Add new review to a service
       app.post('/services/:id/reviews', async (req, res) => {
-        const id = req.params.id;
-      const { ObjectId } = require('mongodb');
-      const review = req.body;
+  try {
+    const serviceId = req.params.id;
+    const review = req.body;
+    review._id = new ObjectId();
+    
+    const filter = { _id: new ObjectId(serviceId) };
+    const updateDoc = { $push: { reviews: review } };
 
-      const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $push: { reviews: review }
-      };
+    const result = await servicesCollection.updateOne(filter, updateDoc);
+    res.send({ success: result.acknowledged });
+  } catch (err) {
+    res.status(500).send({ success: false, message: err.message });
+  }
+});
 
-      const result = await servicesCollection.updateOne(filter, updateDoc);
-      res.send(result);
+app.get('/my-reviews/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const services = await servicesCollection.find({ "reviews.userEmail": email }).toArray();
+    // Flatten reviews with service title
+    const userReviews = [];
+    services.forEach(service => {
+      service.reviews.forEach(review => {
+        if (review.userEmail === email) {
+          userReviews.push({
+            reviewId: review._id || new ObjectId(), 
+            serviceId: service._id,
+            serviceTitle: service.foodTitle,
+            reviewText: review.reviewText,
+            rating: review.rating,
+          });
+        }
       });
+    });
+    res.send(userReviews);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+app.put('/services/:serviceId/reviews/:reviewId', async (req, res) => {
+  try {
+    const { serviceId, reviewId } = req.params;
+    const { reviewText, rating } = req.body;
+    const filter = { _id: new ObjectId(serviceId), "reviews._id": new ObjectId(reviewId) };
+    const updateDoc = { $set: { "reviews.$.reviewText": reviewText, "reviews.$.rating": rating } };
+
+    const result = await servicesCollection.updateOne(filter, updateDoc);
+    res.send({ success: result.acknowledged });
+  } catch (err) {
+    res.status(500).send({ success: false, message: err.message });
+  }
+});
+
+// Delete a review
+app.delete('/services/:serviceId/reviews/:reviewId', async (req, res) => {
+  try {
+    const { serviceId, reviewId } = req.params;
+    const filter = { _id: new ObjectId(serviceId) };
+    const updateDoc = { $pull: { reviews: { _id: new ObjectId(reviewId) } } };
+
+    const result = await servicesCollection.updateOne(filter, updateDoc);
+    res.send({ success: result.acknowledged });
+  } catch (err) {
+    res.status(500).send({ success: false, message: err.message });
+  }
+});
 
       //  Update a service (only by owner)
       app.put('/services/:id', async (req, res) => {
