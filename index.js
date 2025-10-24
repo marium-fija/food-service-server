@@ -37,6 +37,7 @@ async function run() {
 
     const servicesCollection = client.db("foodServiceDB").collection("services");
     const usersCollection = client.db("foodServiceDB").collection("users");
+    const ambassadorCollection = client.db("foodServiceDB").collection("ambassadors");
 
     app.get('/services', async(req, res) => {
       const services = await servicesCollection.find({}).limit(6).toArray();
@@ -216,7 +217,28 @@ app.get('/my-services/:email', async (req, res) => {
       res.send(result);
     })
 
+// POST - Add Ambassador Application
+app.post('/ambassador-apply', async (req, res) => {
+  try {
+    const formData = req.body;
+    formData.appliedAt = new Date();
+    const result = await ambassadorCollection.insertOne(formData);
+    res.send({ success: true, message: "Application submitted successfully", result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, message: "Server error while submitting application" });
+  }
+});
 
+// GET - Show All Ambassadors (optional)
+app.get('/ambassadors', async (req, res) => {
+  try {
+    const result = await ambassadorCollection.find().toArray();
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ message: "Error fetching ambassadors" });
+  }
+});
 
 
 
